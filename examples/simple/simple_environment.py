@@ -1,6 +1,5 @@
 import math
 import random
-from typing import Optional
 
 from examples.simple.simple_message import SimpleMessage
 from meshtastic_sim import Environment, Node, SendingMessage, ReceivingMessage, Simulator
@@ -17,7 +16,7 @@ class SimpleEnvironment(Environment):
         node.send_message(
             SimpleMessage(node, simulator.nodes[len(simulator.nodes) - 1], node, 10, random.randint(0, 2 ** 32 - 1)))
 
-    def receives(self, step: int, sender: Node, receiver: Node, message: SendingMessage) -> Optional[ReceivingMessage]:
+    def receives(self, step: int, sender: Node, receiver: Node, message: SendingMessage) -> ReceivingMessage | None:
         sender_pos = sender.location
         receiver_pos = receiver.location
         diff = [abs(sender_pos[0] - receiver_pos[0]), abs(sender_pos[1] - receiver_pos[1])]

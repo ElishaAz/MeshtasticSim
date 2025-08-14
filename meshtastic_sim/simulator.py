@@ -72,6 +72,8 @@ class Simulator(Generic[E, N, L]):
         if self.logger is not None:
             self.logger.pre_step(self.state.step)
 
+        self.environment.pre_step(self.state.step)
+
         outgoing_messages: dict[N, SendingMessageType] = dict()
         for node in self.nodes:
             incoming_message = self.state.received_messages.get(node, None)
@@ -91,6 +93,8 @@ class Simulator(Generic[E, N, L]):
         incoming_messages = self._send_messages(self.state.step, outgoing_messages)
 
         self.state.received_messages = incoming_messages
+
+        self.environment.post_step(self.state.step)
 
         if self.logger is not None:
             self.logger.post_step(self.state.step)

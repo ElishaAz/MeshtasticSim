@@ -5,6 +5,7 @@ from .message import SendingMessageType, ReceivingMessageType
 from .node import Node
 
 if TYPE_CHECKING:
+    # noinspection PyUnusedImports
     from .simulator import Simulator
 
 
@@ -28,5 +29,19 @@ class Environment(ABC):
         :param receiver: The receiving node.
         :param message: The message being sent.
         :return: A ReceivingMessage instance if the message was received, None otherwise.
+        """
+        pass
+
+    def pre_step(self, step: int):
+        """
+        Called before each simulation step.
+        :param step: The current simulation step number.
+        """
+        pass
+
+    def post_step(self, step: int):
+        """
+        Called after each simulation step.
+        :param step: The current simulation step number.
         """
         pass

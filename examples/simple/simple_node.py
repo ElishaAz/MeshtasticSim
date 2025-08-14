@@ -1,5 +1,3 @@
-from typing import Optional
-
 from meshtastic_sim import Node, ReceivingMessage, SendingMessage
 from simple_message import SimpleMessage
 
@@ -15,8 +13,7 @@ class SimpleNode(Node):
     def send_message(self, message: SimpleMessage):
         self.message = message
 
-    def step(self, step: int, received: Optional[ReceivingMessage[SimpleMessage]]) -> Optional[
-        SendingMessage[SimpleMessage]]:
+    def step(self, step: int, received: ReceivingMessage[SimpleMessage] | None) -> SendingMessage[SimpleMessage] | None:
         if self.message is not None:
             message: SendingMessage[SimpleMessage] = SendingMessage(self.message)
             self.received_messages.add(self.message.id)
