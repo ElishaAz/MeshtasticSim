@@ -19,7 +19,7 @@ class MeshLogger(Logger):
         pass
 
     def message_sent(self, step: int, node: MeshNode, message: MeshSendingMessage):
-        print(F"Node '{node.name}' sent message")
+        print(F"Node '{node.name}' sent message", message.message.packet_id, message.message.payload)
 
     def message_received(self, step: int, node: MeshNode, message: MeshReceivingMessage):
-        print(F"Node '{node.name}' received message")
+        print(F"Node '{node.name}' received message", message.message.packet_id, message.message.payload)

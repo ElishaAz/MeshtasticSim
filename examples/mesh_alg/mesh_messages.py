@@ -3,6 +3,14 @@ from typing import Any
 
 from meshtastic_sim import Message, SendingMessage, ReceivingMessage
 
+@dataclass
+class Ack:
+    packet_id: int
+
+@dataclass
+class Nak:
+    packet_id: int
+
 
 @dataclass
 class HeaderFlags:
@@ -24,7 +32,7 @@ class MeshMessage(Message):
     relay_node: int  # 1 byte. Packet Header: Relay node of the current transmission.
 
     ####### PAYLOAD #######
-    payload: Any  # Max 237 bytes. Actual packet data. Unused bytes are not transmitted.
+    payload: Any | Ack | Nak  # Max 237 bytes. Actual packet data. Unused bytes are not transmitted.
 
 
 @dataclass

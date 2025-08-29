@@ -30,7 +30,7 @@ class MeshEnvironment(Environment):
 
         return rssi > node.sensitivity
 
-    def _get_cad(self, node: MeshNode) -> bool:
+    def do_cad(self, node: MeshNode) -> bool:
         """
         :param node:
         :return: True if the channel is clear for the node to send a message.
@@ -44,7 +44,7 @@ class MeshEnvironment(Environment):
         return True
 
     def try_send(self, node: MeshNode) -> bool:
-        if self.is_sending(node) != SendingState.NOT_SENDING or not self._get_cad(node):
+        if self.is_sending(node) != SendingState.NOT_SENDING or not self.do_cad(node):
             return False
 
         self.sending_messages[self.step].add(node)

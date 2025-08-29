@@ -5,16 +5,17 @@ from pyglet.window import mouse
 
 from meshtastic_sim import Simulator, Node
 
-
 _NODE_RADIUS = 7
+
 
 class Graphics:
     def __init__(self, simulator: Simulator, create_node: Callable[[tuple[float, float]], Node], scale: float,
-                 step_interval: float = 1):
+                 step_interval: float = 1, on_start: Callable[[], None] = None):
         self.simulator = simulator
         self.create_node = create_node
         self.scale = scale
         self.step_interval = step_interval
+        self.on_start = on_start
 
         self.nodes: dict[Node, tuple[int, int]] = dict()
 
@@ -33,6 +34,8 @@ class Graphics:
 
     def _start_simulation(self):
         self.mode = "simulate"
+        if self.on_start is not None:
+            self.on_start()
         self.simulator.start()
         pyglet.clock.schedule_interval(self._do_step, self.step_interval)
         self._do_step(1)

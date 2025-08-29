@@ -1,7 +1,13 @@
 import math
+import random
 from enum import Enum
+from typing import TYPE_CHECKING
 
-from examples.mesh_alg.mesh_node import MeshNode
+if TYPE_CHECKING:
+    # noinspection PyUnusedImports
+    from examples.mesh_alg.mesh_node import MeshNode
+
+BROADCAST_ID = 0xFFFFFFFF
 
 
 def rssi_at_distance(tx_power: float, distance: float) -> float:
@@ -38,10 +44,14 @@ def distance_at_rssi(tx_power: float, rssi: float) -> float:
     return distance
 
 
-def distance_between(node: MeshNode, other: MeshNode) -> float:
+def distance_between(node: "MeshNode", other: "MeshNode") -> float:
     distance = node.location[0] - other.location[0], node.location[1] - other.location[1]
     distance = math.sqrt(distance[0] ** 2 + distance[1] ** 2)
     return distance
+
+
+def random_packet_id() -> int:
+    return random.randint(0, BROADCAST_ID - 1)
 
 
 class SendingState(Enum):
