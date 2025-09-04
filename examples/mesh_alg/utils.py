@@ -1,6 +1,5 @@
 import math
 import random
-from enum import Enum
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -52,9 +51,3 @@ def distance_between(node: "MeshNode", other: "MeshNode") -> float:
 
 def random_packet_id() -> int:
     return random.randint(0, BROADCAST_ID - 1)
-
-
-class SendingState(Enum):
-    NOT_SENDING = 0
-    SENDING = 1
-    FINISHED = 2

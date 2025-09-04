@@ -1,17 +1,22 @@
 from examples.mesh_alg.mesh_messages import MeshSendingMessage, MeshReceivingMessage
-from examples.mesh_alg.utils import rssi_at_distance, distance_between, SendingState
+from examples.mesh_alg.utils import rssi_at_distance, distance_between
 from mesh_logger import MeshLogger
 from mesh_node import MeshNode
 from meshtastic_sim import Environment, Simulator
 
+N = MeshNode
+L = MeshLogger
+S = MeshSendingMessage
+R = MeshReceivingMessage
 
-class MeshEnvironment(Environment):
+
+class MeshEnvironment(Environment[N, S, R]):
     def __init__(self, send_steps: int = 5):
         self.send_steps = send_steps
         self.sending_messages: dict[int, set[MeshNode]] = dict()
         self.step = 0
 
-    def start(self, simulator: Simulator["MeshEnvironment", MeshNode, MeshLogger]):
+    def start(self, simulator: Simulator["MeshEnvironment", N, L, S, R]):
         pass
 
     def pre_step(self, step: int):
@@ -43,28 +48,22 @@ class MeshEnvironment(Environment):
 
         return True
 
-    def try_send(self, node: MeshNode) -> bool:
-        if self.is_sending(node) != SendingState.NOT_SENDING or not self.do_cad(node):
-            return False
+    def receiving(self, step: int, receiver: N,
+                  sent_now_messages: dict[N, S], sent_messages: dict[N, tuple[S, int]]) -> N | None:
+        for sender, message in sent_now_messages.items():
+            distance = distance_between(receiver, sender)
+            rssi = rssi_at_distance(message.tx_power, distance)
+            if rssi >= receiver.sensitivity:
+                return sender
+        return None
 
-        self.sending_messages[self.step].add(node)
+    def interfering(self, step: int, receiver: N, receiving_from: N, sent_messages: dict[N, tuple[S, int]]) -> bool:
+        pass  # TODO: Implement interference logic
 
-        return True
+    def finished_sending(self, step: int, sender: N, message: S, sent_step: int) -> bool:
+        return sent_step + self.send_steps <= step
 
-    def is_sending(self, node: MeshNode) -> SendingState:
-
-        if (self.step - self.send_steps in self.sending_messages and
-                node in self.sending_messages[self.step - self.send_steps]):
-            return SendingState.FINISHED
-
-        for nodes in self.sending_messages.values():
-            if node in nodes:
-                return SendingState.SENDING
-
-        return SendingState.NOT_SENDING
-
-    def receives(self, step: int, sender: MeshNode, receiver: MeshNode,
-                 message: MeshSendingMessage) -> MeshReceivingMessage | None:
+    def receives(self, step: int, receiver: N, sender: N, message: S, sent_step: int) -> R | None:
         distance = distance_between(receiver, sender)
         rssi = rssi_at_distance(message.tx_power, distance)
         if rssi < receiver.sensitivity:

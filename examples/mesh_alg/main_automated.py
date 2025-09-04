@@ -4,7 +4,7 @@ from examples.simple.simple_environment import SimpleEnvironment
 from examples.simple.simple_logger import SimpleLogger
 from examples.simple.simple_message import SimpleMessage
 from examples.simple.simple_node import SimpleNode
-from meshtastic_sim import Simulator, Node
+from meshtastic_sim import Simulator
 
 if __name__ == '__main__':
     logger = SimpleLogger()
@@ -26,4 +26,4 @@ if __name__ == '__main__':
     nodes[0].send_message(message)
 
     sim = Simulator(nodes, environment, logger)
-    sim.main(10)
+    sim.main(50)
