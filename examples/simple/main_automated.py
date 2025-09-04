@@ -26,4 +26,4 @@ if __name__ == '__main__':
     nodes[0].send_message(message)
 
     sim = Simulator(nodes, environment, logger)
-    sim.main(10)
+    sim.main(50)

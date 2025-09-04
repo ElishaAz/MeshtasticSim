@@ -21,5 +21,5 @@ if __name__ == '__main__':
         return SimpleNode(str(i - 1), location, radius)
 
 
-    graphics = Graphics(sim, create_node, scale)
+    graphics = Graphics(sim, create_node, scale, step_interval=0.1)
     graphics.main()
