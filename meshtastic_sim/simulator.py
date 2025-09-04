@@ -4,22 +4,25 @@ from typing import Generic, TypeVar
 
 from .environment import Environment
 from .logger import Logger
-from .message import ReceivingMessageType, SendingMessageType
-from .node import Node
+from .message import SendingMessage, ReceivingMessage
+from .node import Node, RadioState
 
 E = TypeVar('E', bound=Environment)
 N = TypeVar('N', bound=Node)
 L = TypeVar('L', bound=Logger)
+S = TypeVar('S', bound=SendingMessage)
+R = TypeVar('R', bound=ReceivingMessage)
 
 
 @dataclass
-class SimulatorState:
+class SimulatorState(Generic[N, S, R]):
     step: int = 0
-    sent_messages: dict[Node, SendingMessageType | None] = field(default_factory=dict)
-    received_messages: dict[Node, ReceivingMessageType | None] = field(default_factory=dict)
+    node_radio_states: dict[N, RadioState] = field(default_factory=dict)  # node -> radio state
+    sent_messages: dict[N, tuple[S, int]] = field(default_factory=dict)  # node -> (message, step sent)
+    receiving_messages: dict[N, N] = field(default_factory=dict)  # node -> sender node
 
 
-class Simulator(Generic[E, N, L]):
+class Simulator(Generic[E, N, L, S, R]):
     def __init__(self, nodes: list[N], environment: E, logger: L | None = None):
         """
         Create a simulator.
@@ -30,7 +33,7 @@ class Simulator(Generic[E, N, L]):
         self.environment: E = environment
         self.logger: L = logger
 
-        self.state = SimulatorState()
+        self.state: SimulatorState[N, S, R] = SimulatorState()
 
         if self.logger is not None:
             for node in nodes:
@@ -74,25 +77,70 @@ class Simulator(Generic[E, N, L]):
 
         self.environment.pre_step(self.state.step)
 
-        outgoing_messages: dict[N, SendingMessageType] = dict()
+        received_messages: dict[N, R] = dict()
+        sent_now_messages: dict[N, S] = dict()
+
         for node in self.nodes:
-            incoming_message = self.state.received_messages.get(node, None)
+            if self.state.node_radio_states.get(node, RadioState.LISTENING) == RadioState.RECEIVING:
+                receiving_from = self.state.receiving_messages[node]
+                interference = self.environment.interfering(
+                    self.state.step, node, receiving_from, self.state.sent_messages)
 
-            if incoming_message is not None and self.logger is not None:
-                self.logger.message_received(self.state.step, node, incoming_message)
+                if interference:
+                    self.state.node_radio_states[node] = RadioState.LISTENING
+                    del self.state.receiving_messages[node]
 
-            outgoing_message = node.step(self.state.step, incoming_message)
+                    if self.logger is not None:
+                        message, step_sent = self.state.sent_messages[receiving_from]
+                        self.logger.interference(self.state.step, node, receiving_from, message, step_sent)
+
+        for node in self.nodes:
+            if self.state.node_radio_states.get(node, RadioState.LISTENING) == RadioState.SENDING:
+                message, sent_step = self.state.sent_messages[node]
+                finished_sending = self.environment.finished_sending(
+                    self.state.step, node, message, sent_step)
+
+                if finished_sending:
+                    self.logger.finished_sending(self.state.step, node, message, sent_step)
+                    self.state.node_radio_states[node] = RadioState.LISTENING
+
+                    for receiver, sender in self.state.receiving_messages.items():
+                        if sender == node:
+                            received_message = self.environment.receives(
+                                self.state.step, receiver, sender, message, sent_step)
+
+                            if received_message is not None:
+                                received_messages[receiver] = received_message
+
+                            self.state.node_radio_states[receiver] = RadioState.LISTENING
+
+                    del self.state.sent_messages[node]
+
+        for node in self.nodes:
+            received_message = received_messages.get(node, None)
+
+            if received_message is not None and self.logger is not None:
+                self.logger.message_received(self.state.step, node, received_message)
+
+            outgoing_message = node.step(self.state.step, received_message,
+                                         self.state.node_radio_states.get(node, RadioState.LISTENING))
+
+            # TODO: Add a can_send check to the Environment
 
             if outgoing_message is not None:
-                outgoing_messages[node] = outgoing_message
+                self.state.node_radio_states[node] = RadioState.SENDING
+                sent_now_messages[node] = outgoing_message
+                self.state.sent_messages[node] = (outgoing_message, self.state.step)
                 if self.logger is not None:
-                    self.logger.message_sent(self.state.step, node, outgoing_message)
+                    self.logger.started_sending(self.state.step, node, outgoing_message)
 
-        self.state.sent_messages = outgoing_messages
-
-        incoming_messages = self._send_messages(self.state.step, outgoing_messages)
-
-        self.state.received_messages = incoming_messages
+        for node in self.nodes:
+            if self.state.node_radio_states.get(node, RadioState.LISTENING) == RadioState.LISTENING:
+                sender_node = self.environment.receiving(self.state.step, node, sent_now_messages,
+                                                         self.state.sent_messages)
+                if sender_node is not None:
+                    self.state.node_radio_states[node] = RadioState.RECEIVING
+                    self.state.receiving_messages[node] = sender_node
 
         self.environment.post_step(self.state.step)
 
@@ -102,29 +150,3 @@ class Simulator(Generic[E, N, L]):
         self.state.step += 1
 
         return self.state
-
-    def _send_messages(self, step: int,
-                       outgoing_messages: dict[N, SendingMessageType]) -> dict[N, ReceivingMessageType | None]:
-        """
-        Calculates if sent messages are received, and by whom.
-        :param step: The current simulation step.
-        :param outgoing_messages: The messages sent by each node, node -> message sent.
-        :return: The message received by each node, node -> message received.
-        """
-        incoming_messages: dict[N, ReceivingMessageType | None] = dict()
-
-        for sender, message in outgoing_messages.items():
-            for receiver in self.nodes:
-                if sender == receiver:
-                    continue
-
-                received_message = self.environment.receives(step, sender, receiver, message)
-                if received_message is not None:
-                    if receiver in incoming_messages:
-                        # The two (or more) messages interfere with each other, so no message is received TODO: make this a function in Environment.
-                        # incoming_messages[receiver] = None
-                        pass
-                    else:
-                        incoming_messages[receiver] = received_message
-
-        return incoming_messages

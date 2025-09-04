@@ -1,8 +1,7 @@
-from abc import ABC
 from typing import TypeVar, Generic
 
 
-class Message(ABC):
+class Message:
     """
     A message that can be sent by a node.
     """
@@ -21,6 +20,12 @@ class SendingMessage(Generic[M]):
     def __init__(self, message: M):
         self.message: M = message
 
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}({self.message})"
+
+    def __str__(self) -> str:
+        return self.__repr__()
+
 
 class ReceivingMessage(Generic[M]):
     """
@@ -31,6 +36,8 @@ class ReceivingMessage(Generic[M]):
     def __init__(self, message: M):
         self.message: M = message
 
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}({self.message})"
 
-SendingMessageType = TypeVar('SendingMessageType', bound=ReceivingMessage)
-ReceivingMessageType = TypeVar('ReceivingMessageType', bound=ReceivingMessage)
+    def __str__(self) -> str:
+        return self.__repr__()

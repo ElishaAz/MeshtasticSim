@@ -3,9 +3,11 @@ from typing import Callable
 import pyglet
 from pyglet.window import mouse
 
-from meshtastic_sim import Simulator, Node
+from .node import Node, RadioState
+from .simulator import Simulator
 
 _NODE_RADIUS = 7
+_NODE_COLOR = (255, 255, 255)
 
 
 class Graphics:
@@ -28,11 +30,13 @@ class Graphics:
     def _add_node(self, x, y):
         node = self.create_node((x * self.scale, y * self.scale))
         self.nodes[node] = (x, y)
-        self.node_shapes[node] = pyglet.shapes.Circle(x, y, _NODE_RADIUS)
+        self.node_shapes[node] = pyglet.shapes.Circle(x, y, _NODE_RADIUS, color=_NODE_COLOR)
         print(x, y)
         self.simulator.add_node(node)
 
     def _start_simulation(self):
+        if len(self.nodes) == 0:
+            return
         self.mode = "simulate"
         if self.on_start is not None:
             self.on_start()
@@ -49,14 +53,21 @@ class Graphics:
         self.step_label.text = F"Step {state.step}"
 
         self.simulation_shapes.clear()
-        for node in state.sent_messages.keys():
+        for node, (message, _) in state.sent_messages.items():
             (x, y) = self.nodes[node]
             self.simulation_shapes.append(
                 pyglet.shapes.Arc(x, y, node.radius / self.scale, thickness=5, color=(255, 0, 0, 255)))
 
-        for node in state.received_messages.keys():
+        for node, radio_state in state.node_radio_states.items():
+            if radio_state == RadioState.LISTENING:
+                continue
+            elif radio_state == RadioState.RECEIVING:
+                color = (0, 0, 255)
+            elif radio_state == RadioState.SENDING:
+                color = (255, 0, 0)
+
             (x, y) = self.nodes[node]
-            self.simulation_shapes.append(pyglet.shapes.Circle(x, y, _NODE_RADIUS, color=(0, 255, 0, 255)))
+            self.simulation_shapes.append(pyglet.shapes.Circle(x, y, _NODE_RADIUS, color=color))
 
     def _create(self):
         window = pyglet.window.Window(caption="Meshtastic Sim")
