@@ -21,7 +21,7 @@ class SimpleEnvironment(Environment[N, S, R]):
         node.send_message(
             SimpleMessage(node, simulator.nodes[len(simulator.nodes) - 1], node, 10, random.randint(0, 2 ** 32 - 1)))
 
-    def _in_range(self, sender: SimpleNode, receiver: SimpleNode) -> bool:
+    def _in_range(self, sender: N, receiver: N) -> bool:
         sender_pos = sender.location
         receiver_pos = receiver.location
         diff = [abs(sender_pos[0] - receiver_pos[0]), abs(sender_pos[1] - receiver_pos[1])]

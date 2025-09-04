@@ -1,14 +1,15 @@
 from abc import ABC, abstractmethod
-from typing import TypeVar
+from typing import TypeVar, Generic
 
 from .message import SendingMessage, ReceivingMessage
 from .node import Node
 
+N = TypeVar('N', bound=Node)
 S = TypeVar('S', bound=SendingMessage)
 R = TypeVar('R', bound=ReceivingMessage)
 
 
-class Logger(ABC):
+class Logger(ABC, Generic[N, S, R]):
 
     @abstractmethod
     def pre_step(self, step: int) -> None:
@@ -27,7 +28,7 @@ class Logger(ABC):
         pass
 
     @abstractmethod
-    def node_added(self, step: int, node: Node) -> None:
+    def node_added(self, step: int, node: N) -> None:
         """
         Called when a node is added to the simulation.
         :param step: The current simulation step number.
@@ -36,7 +37,7 @@ class Logger(ABC):
         pass
 
     @abstractmethod
-    def node_removed(self, step: int, node: Node) -> None:
+    def node_removed(self, step: int, node: N) -> None:
         """
         Called when a node is removed from the simulation.
         :param step: The current simulation step number.
@@ -45,7 +46,7 @@ class Logger(ABC):
         pass
 
     @abstractmethod
-    def started_sending(self, step: int, node: Node, message: S) -> None:
+    def started_sending(self, step: int, node: N, message: S) -> None:
         """
         Called when a node starts sending a message.
         :param step: The current simulation step number.
@@ -55,7 +56,7 @@ class Logger(ABC):
         pass
 
     @abstractmethod
-    def interference(self, step: int, receiver: Node, sender: Node, message: S, step_sent: int) -> None:
+    def interference(self, step: int, receiver: N, sender: N, message: S, step_sent: int) -> None:
         """
         Called when a node experiences interference while receiving a message.
         :param step: The current simulation step number.
@@ -67,7 +68,7 @@ class Logger(ABC):
         pass
 
     @abstractmethod
-    def finished_sending(self, step: int, node: Node, message: S, sent_step: int) -> None:
+    def finished_sending(self, step: int, node: N, message: S, sent_step: int) -> None:
         """
         Called when a node finishes sending a message.
         :param step: The current simulation step number.
@@ -78,7 +79,7 @@ class Logger(ABC):
         pass
 
     @abstractmethod
-    def message_received(self, step: int, node: Node, message: R):
+    def message_received(self, step: int, node: N, message: R):
         """
         Called when a node receives a message.
         :param step: The current simulation step number.

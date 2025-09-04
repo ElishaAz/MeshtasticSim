@@ -1,23 +1,25 @@
 from typing import Any
 
-from meshtastic_sim import Logger, Node
-from meshtastic_sim.logger import S
-from meshtastic_sim.message import ReceivingMessage
+from meshtastic_sim import Logger, Node, SendingMessage, ReceivingMessage
 from simple_message import SimpleMessage
 from simple_node import SimpleNode
 
+N = SimpleNode
+S = SendingMessage[SimpleMessage]
+R = ReceivingMessage[SimpleMessage]
 
-class SimpleLogger(Logger):
+
+class SimpleLogger(Logger[N, S, R]):
     def pre_step(self, step: int) -> None:
         print(F"============ Step {step} ============")
 
     def post_step(self, step: int) -> Any:
         pass
 
-    def node_added(self, step: int, node: SimpleNode) -> None:
+    def node_added(self, step: int, node: N) -> None:
         print(F"Node '{node.name}' added at {node.location}")
 
-    def node_removed(self, step: int, node: SimpleNode):
+    def node_removed(self, step: int, node: N):
         print(F"Node '{node.name}' removed at {node.location}")
 
     def started_sending(self, step: int, node: Node, message: S) -> None:

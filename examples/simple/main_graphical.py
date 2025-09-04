@@ -1,8 +1,7 @@
 from examples.simple.simple_environment import SimpleEnvironment
 from examples.simple.simple_logger import SimpleLogger
 from examples.simple.simple_node import SimpleNode
-from meshtastic_sim import Simulator, Node
-from meshtastic_sim.graphics import Graphics
+from meshtastic_sim import Simulator, Node, Graphics
 
 if __name__ == '__main__':
     logger = SimpleLogger()

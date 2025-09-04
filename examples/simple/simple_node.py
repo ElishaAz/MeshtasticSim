@@ -2,6 +2,9 @@ from meshtastic_sim import Node, ReceivingMessage, SendingMessage
 from meshtastic_sim.node import RadioState
 from simple_message import SimpleMessage
 
+S = SendingMessage[SimpleMessage]
+R = ReceivingMessage[SimpleMessage]
+
 
 class SimpleNode(Node):
     def __init__(self, name: str, location: tuple[float, float], radius: float):
@@ -14,11 +17,10 @@ class SimpleNode(Node):
     def send_message(self, message: SimpleMessage):
         self.message = message
 
-    def step(self, step: int, received: ReceivingMessage[SimpleMessage] | None,
-             radio_state: RadioState) -> SendingMessage[SimpleMessage] | None:
+    def step(self, step: int, received: R | None, radio_state: RadioState) -> S | None:
 
         if self.message is not None and radio_state == RadioState.LISTENING:
-            message: SendingMessage[SimpleMessage] = SendingMessage(self.message)
+            message: S = SendingMessage(self.message)
             self.received_messages.add(self.message.id)
             self.message = None
             return message
