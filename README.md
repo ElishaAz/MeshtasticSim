@@ -4,6 +4,8 @@ A library for simulating a [Meshtastic](https://meshtastic.org/)-like mesh netwo
 
 This library is made for testing mesh algorithms in various conditions.
 
+![Screenshot](screenshots/screenshot.jpg)
+
 ## Dependencies
 
 The base simulator does not have any dependencies, but the GUI requires `pyglet` (`pip install pyglet`).
