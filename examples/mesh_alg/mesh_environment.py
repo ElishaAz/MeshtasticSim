@@ -1,5 +1,7 @@
+from dataclasses import replace
+
 from examples.mesh_alg.mesh_messages import MeshSendingMessage, MeshReceivingMessage
-from examples.mesh_alg.utils import rssi_at_distance, distance_between
+from examples.mesh_alg.utils import rssi_at_distance, distance_between, SEND_STEPS
 from mesh_logger import MeshLogger
 from mesh_node import MeshNode
 from meshtastic_sim import Environment, Simulator
@@ -11,8 +13,7 @@ R = MeshReceivingMessage
 
 
 class MeshEnvironment(Environment[N, S, R]):
-    def __init__(self, send_steps: int = 5):
-        self.send_steps = send_steps
+    def __init__(self):
         self.sending_messages: dict[int, set[MeshNode]] = dict()
         self.step = 0
 
@@ -22,8 +23,8 @@ class MeshEnvironment(Environment[N, S, R]):
     def pre_step(self, step: int):
         self.step = step
 
-        if step - self.send_steps - 1 in self.sending_messages:
-            del self.sending_messages[step - self.send_steps - 1]
+        if step - SEND_STEPS - 1 in self.sending_messages:
+            del self.sending_messages[step - SEND_STEPS - 1]
 
         self.sending_messages[self.step] = set()
 
@@ -61,7 +62,7 @@ class MeshEnvironment(Environment[N, S, R]):
         pass  # TODO: Implement interference logic
 
     def finished_sending(self, step: int, sender: N, message: S, sent_step: int) -> bool:
-        return sent_step + self.send_steps <= step
+        return sent_step + SEND_STEPS <= step
 
     def receives(self, step: int, receiver: N, sender: N, message: S, sent_step: int) -> R | None:
         distance = distance_between(receiver, sender)
@@ -69,4 +70,7 @@ class MeshEnvironment(Environment[N, S, R]):
         if rssi < receiver.sensitivity:
             return None
 
-        return MeshReceivingMessage(rssi, message.message)
+        noise = 1e-10  # -100dbm
+        snr = rssi / noise
+
+        return MeshReceivingMessage(rssi, snr, replace(message.message))

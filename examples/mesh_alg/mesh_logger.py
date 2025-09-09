@@ -1,7 +1,7 @@
 from typing import Any
 
+from examples.mesh_alg.mesh_node import MeshNode
 from mesh_messages import MeshSendingMessage, MeshReceivingMessage
-from mesh_node import MeshNode
 from meshtastic_sim import Logger
 
 N = MeshNode

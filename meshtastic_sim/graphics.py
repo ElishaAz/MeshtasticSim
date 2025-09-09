@@ -3,6 +3,7 @@ from typing import Callable
 import pyglet
 from pyglet.window import mouse
 
+from .message import SendingMessage
 from .node import Node, RadioState
 from .simulator import Simulator
 
@@ -12,12 +13,14 @@ _NODE_COLOR = (255, 255, 255)
 
 class Graphics:
     def __init__(self, simulator: Simulator, create_node: Callable[[tuple[float, float]], Node], scale: float,
-                 step_interval: float = 1, on_start: Callable[[], None] = None):
+                 step_interval: float = 1, on_start: Callable[[], None] = None,
+                 color_for_message: Callable[[SendingMessage], tuple[int, int, int, int]] = None):
         self.simulator = simulator
         self.create_node = create_node
         self.scale = scale
         self.step_interval = step_interval
         self.on_start = on_start
+        self.color_for_message = color_for_message
 
         self.nodes: dict[Node, tuple[int, int]] = dict()
 
@@ -55,8 +58,9 @@ class Graphics:
         self.simulation_shapes.clear()
         for node, (message, _) in state.sent_messages.items():
             (x, y) = self.nodes[node]
+            color = (255, 0, 0, 255) if self.color_for_message is None else self.color_for_message(message)
             self.simulation_shapes.append(
-                pyglet.shapes.Arc(x, y, node.radius / self.scale, thickness=5, color=(255, 0, 0, 255)))
+                pyglet.shapes.Arc(x, y, node.radius / self.scale, thickness=5, color=color))
 
         for node, radio_state in state.node_radio_states.items():
             if radio_state == RadioState.LISTENING:
@@ -64,7 +68,7 @@ class Graphics:
             elif radio_state == RadioState.RECEIVING:
                 color = (0, 0, 255)
             elif radio_state == RadioState.SENDING:
-                color = (255, 0, 0)
+                color = (0, 255, 0)
 
             (x, y) = self.nodes[node]
             self.simulation_shapes.append(pyglet.shapes.Circle(x, y, _NODE_RADIUS, color=color))

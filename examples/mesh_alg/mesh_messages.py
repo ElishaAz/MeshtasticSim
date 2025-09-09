@@ -3,9 +3,11 @@ from typing import Any
 
 from meshtastic_sim import Message, SendingMessage, ReceivingMessage
 
+
 @dataclass
 class Ack:
     packet_id: int
+
 
 @dataclass
 class Nak:
@@ -44,4 +46,5 @@ class MeshSendingMessage(SendingMessage[MeshMessage]):
 @dataclass
 class MeshReceivingMessage(ReceivingMessage[MeshMessage]):
     rssi: float  # Received Signal Strength Indicator in mW.
+    snr: float  # Signal-to-Noise ratio
     message: MeshMessage  # The actual message received.
